@@ -292,6 +292,9 @@
             drawBall(x, y, '#c80000')
 
             if (x === EndX && y === EndY) {
+                let temp = level + 1;
+                alert('Start level ' + temp);
+                sleep(1000);
                 level++;
                 startGame(gridSize + 4);
             }
@@ -299,7 +302,8 @@
             for (let trap of traps) {
                 const [trapX, trapY] = trap;
                 if (trapX === x && trapY === y) {
-                    //alert('lose');
+                    alert('Down to ' + lives + ' lives');
+                    sleep(1000);
                     removeHeart();
                     lives--;
                     startGame(gridSize);
@@ -308,6 +312,10 @@
             }
         }
 
+        function sleep(ms) {
+            const start = Date.now();
+            while (Date.now() - start < ms) {} // Busy-wait until time's up
+        }
 
         function handleOrientation(event) {
             betta = event.beta;

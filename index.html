@@ -302,7 +302,8 @@
             for (let trap of traps) {
                 const [trapX, trapY] = trap;
                 if (trapX === x && trapY === y) {
-                    alert('Down to ' + lives + ' lives');
+                    let temp = lives - 1;
+                    alert('Down to ' + temp + ' lives');
                     sleep(1000);
                     removeHeart();
                     lives--;

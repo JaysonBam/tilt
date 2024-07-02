@@ -22,6 +22,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            gap: 10px;
         }
         #canvasContainer {
             flex: 1;
@@ -41,12 +42,11 @@
         }
         .buttons button {
             background-color: #c80000; 
-	        color: white; 
+            color: white; 
             padding: 10px 20px;
-	        border-radius: 5px; 
+            border-radius: 5px; 
             font-size: 16px;
             cursor: pointer;
-             
         }
         footer {
             background-color: #b9b9b9;
@@ -58,17 +58,21 @@
 </head>
 <body>
     <header>
+        <div id="hearts">
+            <img src="heart.png" alt="Heart" width="30" height="30">
+            <img src="heart.png" alt="Heart" width="30" height="30">
+            <img src="heart.png" alt="Heart" width="30" height="30">
+            <img src="heart.png" alt="Heart" width="30" height="30">
+            <img src="heart.png" alt="Heart" width="30" height="30">
+        </div>
         <div class="buttons">
-            <button id="startButton">Start</button>
-            <button id="updateButton">Update</button>
+            <button id="restartButton">Restart</button>
         </div>
     </header>
     <div id="canvasContainer">
         <canvas id="canvas"></canvas>
     </div>
-    <footer>
-
-    </footer>
+    <footer></footer>
 
     <script>
         const canvas = document.getElementById('canvas');
@@ -78,32 +82,41 @@
         canvas.width = size;
         canvas.height = size;
 
-        var gridSize;
-        var dx;
-        var dy;
-        var betta;
-        var gamma;
-        var x;
-        var y;
-        var EndX;
-        var EndY;
-        var blockSize;
-        var vector2D;
+        let gridSize;
+        let dx;
+        let dy;
+        let betta;
+        let gamma;
+        let x;
+        let y;
+        let EndX;
+        let EndY;
+        let blockSize;
+        let vector2D;
+        let level = 1;
+        let lives = 5;
+        let traps = [];
+        let hearts;
+        let singleMessage = false;
 
         requestDeviceOrientation();
+        resetHearts();
         startGame(5);
         setInterval(update, 50);
 
-        function startGame(difficulty){
+        function startGame(difficulty) {
             ctx.clearRect(0, 0, size, size);
-            getIntialData(difficulty);
+            getInitialData(difficulty);
             generateMaze();
             drawMaze();            
             drawBall(x, y, '#c80000');
+            
             drawBall(EndX, EndY, 'black');
+            getTraps();
+            drawTraps();
         }
         
-        function getIntialData(difficulty){
+        function getInitialData(difficulty) {
             gridSize = difficulty;
             dx = 0;
             dy = 0;
@@ -115,9 +128,10 @@
             EndY = gridSize - 2;
             blockSize = size / gridSize;
             vector2D;
+            traps = [];
         }
 
-        function drawMaze(){
+        function drawMaze() {
             for (let i = 0; i < vector2D.length; i++) {
                 for (let j = 0; j < vector2D[i].length; j++) {
                     if (vector2D[i][j] == 1) {
@@ -140,8 +154,8 @@
                 }
             }
 
-            var stack = [];
-            var visited = [];
+            const stack = [];
+            const visited = [];
 
             for (let i = 0; i < gridSize; i++) {
                 visited[i] = [];
@@ -150,28 +164,32 @@
                 }
             }
 
-            var startX = 1;
-            var startY = 1;
-            var endX = gridSize - 2;
-            var endY = gridSize - 2;
+            const startX = 1;
+            const startY = 1;
+            const endX = gridSize - 2;
+            const endY = gridSize - 2;
 
             stack.push([startX, startY]);
             visited[startX][startY] = true;
+            endFound = false;
 
             while (stack.length > 0) {
-                var current = stack.pop();
-                var [x, y] = current;
-                var directions = shuffleDirections();
+                const current = stack.pop();
+                const [x, y] = current;
+                const directions = shuffleDirections();
 
                 for (let direction of directions) {
-                    var newX = x + direction[0] * 2;
-                    var newY = y + direction[1] * 2;
+                    const newX = x + direction[0] * 2;
+                    const newY = y + direction[1] * 2;
+
+                    
                     if (newX >= 1 && newX < gridSize - 1 && newY >= 1 && newY < gridSize - 1 && !visited[newX][newY]) {
-                        vector2D[(newX + x)/2][(newY+y)/2] = 0;
+                        vector2D[(newX + x) / 2][(newY + y) / 2] = 0;
                         visited[newX][newY] = true;
                         stack.push([newX, newY]);
                     }
                 }
+
             }
 
             vector2D[startX][startY] = 0; 
@@ -179,7 +197,7 @@
         }
 
         function shuffleDirections() {
-            var directions = [[-1, 0], [1, 0], [0, -1], [0, 1]   ];
+            const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
             for (let i = directions.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -191,12 +209,12 @@
         
         function drawSquare(xPos, yPos, color) {
             ctx.fillStyle = color;
-            ctx.fillRect(xPos * blockSize, yPos * blockSize, blockSize, blockSize); // Draw a square inside the canvas
+            ctx.fillRect(xPos * blockSize, yPos * blockSize, blockSize, blockSize);
         }
 
         function drawBall(xPos, yPos, color) {
-            var centerX = xPos * blockSize + blockSize / 2;
-            var centerY = yPos * blockSize + blockSize / 2;
+            const centerX = xPos * blockSize + blockSize / 2;
+            const centerY = yPos * blockSize + blockSize / 2;
             ctx.beginPath();
             ctx.arc(centerX, centerY, blockSize / 2 - 1, 0, Math.PI * 2);
             ctx.fillStyle = color;
@@ -204,76 +222,147 @@
             ctx.closePath();
         }
 
-        function update(){
+        function getTraps(){
+            for (let i = 1; i < vector2D.length - 1; i++) {
+                for (let j = 1; j < vector2D[i].length - 1; j++) {
+                    var tel = 0;
+                    if (vector2D[i+1][j] === 1) tel++;
+                    if (vector2D[i-1][j] === 1) tel++;
+                    if (vector2D[i][j+1] === 1) tel++;
+                    if (vector2D[i][j-1] === 1) tel++;
+
+                    if (tel === 3 && !(EndX === j && EndY === i) && vector2D[i][j] === 0 && Math.random() < 0.25)
+                        traps.push([j,i]);
+                }
+            }
+        }
+
+        function drawTraps() {
+            for (let trap of traps) {
+                const xPos = trap[0];
+                const yPos = trap[1];
+                drawBall(xPos, yPos, 'yellow'); // Replace 'red' with your desired color
+            }
+        }
+
+        function update() {
             console.log('dx = ' + dx + '\t' + 'dy = ' + dy);
+            if (lives === 0){
+                if (singleMessage)
+                    alert('You reached level ' + level);
+                singleMessage = false;
+                return;
+            }
+            singleMessage = true;   
 
             ctx.clearRect(x * blockSize, y * blockSize, blockSize, blockSize);
 
-            dx += Math.sin(gamma/180*Math.PI);
-            dy += Math.sin(betta/180*Math.PI);
+            dx += Math.sin(gamma / 180 * Math.PI);
+            dy += Math.sin(betta / 180 * Math.PI);
 
-
-            if (dx >= 1){
-                dx-=1;
-                if (vector2D[y][x+1] === 0)
+            if (dx >= 1) {
+                dx -= 1;
+                if (vector2D[y][x + 1] === 0)
                     x++;
                 else
                     dx = 0;
             }
-            if (dx <= -1){
-                dx+=1;
-                if (vector2D[y][x-1] === 0)
+            if (dx <= -1) {
+                dx += 1;
+                if (vector2D[y][x - 1] === 0)
                     x--;
                 else
                     dx = 0;
             }
-            if (dy >= 1){
-                dy-=1;
-                if (vector2D[y+1][x] === 0)
+            if (dy >= 1) {
+                dy -= 1;
+                if (vector2D[y + 1][x] === 0)
                     y++;
                 else
                     dy = 0;
             }
-            if (dy <= -1){
-                dy+=1;
-                if (vector2D[y-1][x] === 0)
+            if (dy <= -1) {
+                dy += 1;
+                if (vector2D[y - 1][x] === 0)
                     y--;
                 else
-                    dx = 0;
+                    dy = 0;
             }
 
             drawBall(x, y, '#c80000')
 
-            if (x===EndX && y===EndY)
-                startGame(gridSize+4);
+            if (x === EndX && y === EndY) {
+                level++;
+                startGame(gridSize + 4);
+            }
+
+            for (let trap of traps) {
+                const [trapX, trapY] = trap;
+                if (trapX === x && trapY === y) {
+                    //alert('lose');
+                    removeHeart();
+                    lives--;
+                    startGame(gridSize);
+                    break; // Exit the loop once we find the trap
+                }
+            }
         }
 
+
         function handleOrientation(event) {
-            betta = event.beta
-            gamma = event.gamma
+            betta = event.beta;
+            gamma = event.gamma;
         }
   
         async function requestDeviceOrientation() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            try {
-                const permissionState = await DeviceOrientationEvent.requestPermission()
-                if (permissionState === 'granted') {
-                    window.addEventListener('deviceorientation', handleOrientation)
-                } else {
-                    alert('Permission was denied')
+                try {
+                    const permissionState = await DeviceOrientationEvent.requestPermission();
+                    if (permissionState === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation);
+                    } else {
+                        alert('Permission was denied');
+                    }
+                } catch (error) {
+                    alert(error);
                 }
-            } catch (error) {
-                alert(error)
-            }
             } else if ('DeviceOrientationEvent' in window) {
                 console.log("not iOS");
-            window.addEventListener('deviceorientation', handleOrientation)
+                window.addEventListener('deviceorientation', handleOrientation);
             } else {
-                alert('not supported')
+                alert('not supported');
             }
         }
 
+        function resetHearts() {
+            lives = 5;
+            const heartsContainer = document.getElementById('hearts');
+            heartsContainer.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const heart = document.createElement('img');
+                heart.src = 'heart.png';
+                heart.alt = 'Heart';
+                heart.width = 30;
+                heart.height = 30;
+                heartsContainer.appendChild(heart);
+            }
+            hearts = heartsContainer.getElementsByTagName('img');
+        }
 
+        function removeHeart() {
+            if (hearts.length > 0) {
+                hearts[hearts.length - 1].remove();
+            }
+        }
+
+        document.getElementById('restartButton').addEventListener('click', () => {
+            resetHearts();
+            level = 0;
+            startGame(5);          
+        });
+
+        // Example usage of removeHeart
+        // Call removeHeart() function whenever you want to remove a heart, e.g., on some event.
     </script>
 </body>
 </html>

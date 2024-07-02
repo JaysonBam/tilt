@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Example</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background-color: #b9b9b9;
+        }
+        header {
+            background-color: #b9b9b9;
+            color: #000;
+            padding: 10px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #canvasContainer {
+            flex: 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #canvas {
+            background-color: #fff;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .buttons button {
+            background-color: #c80000; 
+	        color: white; 
+            padding: 10px 20px;
+	        border-radius: 5px; 
+            font-size: 16px;
+            cursor: pointer;
+             
+        }
+        footer {
+            background-color: #b9b9b9;
+            color: #000;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="buttons">
+            <button id="startButton">Start</button>
+            <button id="updateButton">Update</button>
+        </div>
+    </header>
+    <div id="canvasContainer">
+        <canvas id="canvas"></canvas>
+    </div>
+    <footer>
+
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const ctx = canvas.getContext('2d');
+
+        var gridSize;
+        var realX;
+        var realY;
+        var x;
+        var y;
+        var EndX;
+        var EndY;
+        var vector2D;
+        var blockSize;
+
+        var a = 0;
+        var b = 0;
+        var vx = 0;
+        var vy = 0;
+
+        const size = Math.min(canvasContainer.offsetWidth, canvasContainer.offsetHeight);
+
+        canvas.width = size;
+        canvas.height = size;
+
+    
+        gridSize = 9;
+        realX = x = 1;
+        realY = y = 1;
+        EndX = gridSize - 2;
+        EndY = gridSize - 2;
+        generateMaze();
+        blockSize = size / gridSize;
+
+    
+        for (let i = 0; i < vector2D.length; i++) {
+            for (let j = 0; j < vector2D[i].length; j++) {
+                if (vector2D[i][j] == 1) {
+                    drawSquare(j, i, '#000000');
+                } 
+            }
+        }
+        console.log(x+":"+y);
+        drawBall(x, y, '#c80000');
+        drawBall(EndX, EndY, 'black');
+
+        function generateMaze() {
+            vector2D = [];
+            for (let i = 0; i < gridSize; i++) {
+                vector2D[i] = [];
+                for (let j = 0; j < gridSize; j++) {
+                    if (i % 2 !== 0 && j % 2 !== 0) {
+                        vector2D[i][j] = 0;
+                    } else {
+                        vector2D[i][j] = 1;
+                    }
+                }
+            }
+
+            var stack = [];
+            var visited = [];
+
+            for (let i = 0; i < gridSize; i++) {
+                visited[i] = [];
+                for (let j = 0; j < gridSize; j++) {
+                    visited[i][j] = false;
+                }
+            }
+
+            var startX = 1;
+            var startY = 1;
+            var endX = gridSize - 2;
+            var endY = gridSize - 2;
+
+            stack.push([startX, startY]);
+            visited[startX][startY] = true;
+
+            while (stack.length > 0) {
+                var current = stack.pop();
+                var [x, y] = current;
+                var directions = shuffleDirections(); // Randomize the order of directions
+
+                for (let direction of directions) {
+                    var newX = x + direction[0] * 2;
+                    var newY = y + direction[1] * 2;
+                    if (newX >= 1 && newX < gridSize - 1 && newY >= 1 && newY < gridSize - 1 && !visited[newX][newY]) {
+                        vector2D[(newX + x)/2][(newY+y)/2] = 0; // Open path between cells
+                        visited[newX][newY] = true;
+                        stack.push([newX, newY]);
+                    }
+                }
+            }
+
+            vector2D[startX][startY] = 0; // Ensure start and end are open
+            vector2D[endX][endY] = 0;
+        }
+
+        function shuffleDirections() {
+            var directions = [
+                [-1, 0], // Up
+                [1, 0],  // Down
+                [0, -1], // Left
+                [0, 1]   // Right
+            ];
+
+            for (let i = directions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [directions[i], directions[j]] = [directions[j], directions[i]];
+            }
+
+            return directions;
+        }
+        
+
+
+        function drawSquare(xPos, yPos, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(xPos * blockSize, yPos * blockSize, blockSize, blockSize); // Draw a square inside the canvas
+        }
+
+        function drawBall(xPos, yPos, color) {
+            var centerX = xPos * blockSize + blockSize / 2;
+            var centerY = yPos * blockSize + blockSize / 2;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, blockSize / 2 - 1, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function updatePosition(newX, newY) {
+            ctx.clearRect(x * blockSize, y * blockSize, blockSize, blockSize);
+            x = newX;
+            y = newY;
+            drawBall(newX, newY, '#c80000'); // Draw the new ball
+        }
+
+        // document.getElementById('startButton').addEventListener('click', () => {
+        //     console.log('Start button clicked');
+        //     for (let i = 0; i < vector2D.length; i++) {
+        //         for (let j = 0; j < vector2D[i].length; j++) {
+        //             if (vector2D[i][j] == 1) {
+        //                 drawSquare(j, i, '#000000');
+        //             } else {
+        //                 //drawSquare(j, i, '#fff');
+        //             }
+        //         }
+        //     }
+        //     drawBall(x, y, '#c80000');
+        //     drawBall(EndX, EndY, 'black');
+        // });
+
+        function update(){
+            console.log('A = ' + a + '\t' + 'Vy = ' + vy);
+            console.log('b = ' + b + '\t' + 'Vx = ' + vx);
+
+            // const A = 1;
+            // const B = 0.10;
+
+            // vx += -1*A*Math.sin(b);
+            // var dx = B*vx;
+            
+            // vy += 1*A*Math.sin(a);
+            // var dy = B*vy;
+            
+            // if (dx != 0 && vector2D[y][Math.floor(realX+dx)] === 1){
+            //     var dx = 0;
+            //     vx = 0;
+            // }
+
+            // if (dy != 0 && vector2D[Math.floor(realY+dy)][x] === 1){
+            //     var dy = 0;
+            //     vy = 0;
+            // }
+
+
+            ctx.clearRect(x * blockSize, y * blockSize, blockSize, blockSize);
+
+            if (b <= -10 && vector2D[y][x - 1] === 0)
+                x--;
+            if (b >= 10 && vector2D[y][x + 1] === 0)
+                x++;
+
+            if (a <= -10 && vector2D[y - 1][x] === 0)
+                y--;
+            if (a >= 10 && vector2D[y + 1][x] === 0)
+                y++;
+            // realX += dx;
+            // realY += dy;
+            // x = Math.floor(realX);
+            // y = Math.floor(realY);
+
+
+            drawBall(x, y, '#c80000')
+            
+            //updatePosition(x+dx, y+dy);
+        }
+
+        document.getElementById('updateButton').addEventListener('click', () => {
+            console.log('Update button clicked');
+            update();
+        });
+
+        function handleOrientation(event) {
+            //let alpha = event.alpha
+            a = event.beta
+            b = event.gamma
+            console.log('hier');
+            //console.log(gamma);
+        
+            //let cube = document.querySelector('.cube');
+            //cube.style.transform = 'rotateX(' + beta + 'deg) rotateY(' + gamma + 'deg) rotateZ(' + alpha + 'deg)';
+        
+        }
+  
+  
+        async function requestDeviceOrientation() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            //iOS 13+ devices
+            try {
+                const permissionState = await DeviceOrientationEvent.requestPermission()
+                if (permissionState === 'granted') {
+                window.addEventListener('deviceorientation', handleOrientation)
+                } else {
+                alert('Permission was denied')
+                }
+            } catch (error) {
+                alert(error)
+            }
+            } else if ('DeviceOrientationEvent' in window) {
+            //non iOS 13+ devices
+            console.log("not iOS");
+            window.addEventListener('deviceorientation', handleOrientation)
+            } else {
+            //not supported
+            alert('nicht unterstützt')
+            }
+        }
+
+        document.addEventListener('keydown', (event) => {
+            
+                switch(event.key) {
+                    case 'ArrowUp':{
+                        if (a < 90)
+                            a+=10;
+                    }
+                        
+                        break;
+                    case 'ArrowDown':{
+                        if (a > -90)
+                            a-=10;
+                    }
+                        break;
+                    case 'ArrowLeft':{
+                        if (b > -90)
+                            b-=10;
+                    }
+                        break;
+                    case 'ArrowRight':{
+                        if (b < 90)
+                            b+=10;
+                    }
+                        break;
+                    default:
+                        break;
+                }
+            
+        });
+
+        requestDeviceOrientation();
+        setInterval(update, 500);
+
+    </script>
+</body>
+</html>

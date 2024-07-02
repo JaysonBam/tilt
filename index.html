@@ -74,48 +74,59 @@
         const canvas = document.getElementById('canvas');
         const canvasContainer = document.getElementById('canvasContainer');
         const ctx = canvas.getContext('2d');
+        const size = Math.min(canvasContainer.offsetWidth, canvasContainer.offsetHeight);
+        canvas.width = size;
+        canvas.height = size;
 
         var gridSize;
-        var realX;
-        var realY;
+        var dx;
+        var dy;
+        var betta;
+        var gamma;
         var x;
         var y;
         var EndX;
         var EndY;
-        var vector2D;
         var blockSize;
+        var vector2D;
 
-        var a = 0;
-        var b = 0;
-        var vx = 0;
-        var vy = 0;
+        requestDeviceOrientation();
+        startGame(5);
+        setInterval(update, 50);
 
-        const size = Math.min(canvasContainer.offsetWidth, canvasContainer.offsetHeight);
+        function startGame(difficulty){
+            ctx.clearRect(0, 0, size, size);
+            getIntialData(difficulty);
+            generateMaze();
+            drawMaze();            
+            drawBall(x, y, '#c80000');
+            drawBall(EndX, EndY, 'black');
+        }
+        
+        function getIntialData(difficulty){
+            gridSize = difficulty;
+            dx = 0;
+            dy = 0;
+            betta = 0;
+            gamma = 0;
+            x = 1;
+            y = 1;
+            EndX = gridSize - 2;
+            EndY = gridSize - 2;
+            blockSize = size / gridSize;
+            vector2D;
+        }
 
-        canvas.width = size;
-        canvas.height = size;
-
-    
-        gridSize = 9;
-        realX = x = 1;
-        realY = y = 1;
-        EndX = gridSize - 2;
-        EndY = gridSize - 2;
-        generateMaze();
-        blockSize = size / gridSize;
-
-    
-        for (let i = 0; i < vector2D.length; i++) {
-            for (let j = 0; j < vector2D[i].length; j++) {
-                if (vector2D[i][j] == 1) {
-                    drawSquare(j, i, '#000000');
-                } 
+        function drawMaze(){
+            for (let i = 0; i < vector2D.length; i++) {
+                for (let j = 0; j < vector2D[i].length; j++) {
+                    if (vector2D[i][j] == 1) {
+                        drawSquare(j, i, '#000000');
+                    }
+                }
             }
         }
-        console.log(x+":"+y);
-        drawBall(x, y, '#c80000');
-        drawBall(EndX, EndY, 'black');
-
+    
         function generateMaze() {
             vector2D = [];
             for (let i = 0; i < gridSize; i++) {
@@ -150,30 +161,25 @@
             while (stack.length > 0) {
                 var current = stack.pop();
                 var [x, y] = current;
-                var directions = shuffleDirections(); // Randomize the order of directions
+                var directions = shuffleDirections();
 
                 for (let direction of directions) {
                     var newX = x + direction[0] * 2;
                     var newY = y + direction[1] * 2;
                     if (newX >= 1 && newX < gridSize - 1 && newY >= 1 && newY < gridSize - 1 && !visited[newX][newY]) {
-                        vector2D[(newX + x)/2][(newY+y)/2] = 0; // Open path between cells
+                        vector2D[(newX + x)/2][(newY+y)/2] = 0;
                         visited[newX][newY] = true;
                         stack.push([newX, newY]);
                     }
                 }
             }
 
-            vector2D[startX][startY] = 0; // Ensure start and end are open
+            vector2D[startX][startY] = 0; 
             vector2D[endX][endY] = 0;
         }
 
         function shuffleDirections() {
-            var directions = [
-                [-1, 0], // Up
-                [1, 0],  // Down
-                [0, -1], // Left
-                [0, 1]   // Right
-            ];
+            var directions = [[-1, 0], [1, 0], [0, -1], [0, 1]   ];
 
             for (let i = directions.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -183,8 +189,6 @@
             return directions;
         }
         
-
-
         function drawSquare(xPos, yPos, color) {
             ctx.fillStyle = color;
             ctx.fillRect(xPos * blockSize, yPos * blockSize, blockSize, blockSize); // Draw a square inside the canvas
@@ -200,147 +204,75 @@
             ctx.closePath();
         }
 
-        function updatePosition(newX, newY) {
-            ctx.clearRect(x * blockSize, y * blockSize, blockSize, blockSize);
-            x = newX;
-            y = newY;
-            drawBall(newX, newY, '#c80000'); // Draw the new ball
-        }
-
-        // document.getElementById('startButton').addEventListener('click', () => {
-        //     console.log('Start button clicked');
-        //     for (let i = 0; i < vector2D.length; i++) {
-        //         for (let j = 0; j < vector2D[i].length; j++) {
-        //             if (vector2D[i][j] == 1) {
-        //                 drawSquare(j, i, '#000000');
-        //             } else {
-        //                 //drawSquare(j, i, '#fff');
-        //             }
-        //         }
-        //     }
-        //     drawBall(x, y, '#c80000');
-        //     drawBall(EndX, EndY, 'black');
-        // });
-
         function update(){
-            console.log('A = ' + a + '\t' + 'Vy = ' + vy);
-            console.log('b = ' + b + '\t' + 'Vx = ' + vx);
-
-            // const A = 1;
-            // const B = 0.10;
-
-            // vx += -1*A*Math.sin(b);
-            // var dx = B*vx;
-            
-            // vy += 1*A*Math.sin(a);
-            // var dy = B*vy;
-            
-            // if (dx != 0 && vector2D[y][Math.floor(realX+dx)] === 1){
-            //     var dx = 0;
-            //     vx = 0;
-            // }
-
-            // if (dy != 0 && vector2D[Math.floor(realY+dy)][x] === 1){
-            //     var dy = 0;
-            //     vy = 0;
-            // }
-
+            console.log('dx = ' + dx + '\t' + 'dy = ' + dy);
 
             ctx.clearRect(x * blockSize, y * blockSize, blockSize, blockSize);
 
-            if (b <= -10 && vector2D[y][x - 1] === 0)
-                x--;
-            if (b >= 10 && vector2D[y][x + 1] === 0)
-                x++;
+            dx += Math.sin(gamma/180*Math.PI);
+            dy += Math.sin(betta/180*Math.PI);
 
-            if (a <= -10 && vector2D[y - 1][x] === 0)
-                y--;
-            if (a >= 10 && vector2D[y + 1][x] === 0)
-                y++;
-            // realX += dx;
-            // realY += dy;
-            // x = Math.floor(realX);
-            // y = Math.floor(realY);
 
+            if (dx >= 1){
+                dx-=1;
+                if (vector2D[y][x+1] === 0)
+                    x++;
+                else
+                    dx = 0;
+            }
+            if (dx <= -1){
+                dx+=1;
+                if (vector2D[y][x-1] === 0)
+                    x--;
+                else
+                    dx = 0;
+            }
+            if (dy >= 1){
+                dy-=1;
+                if (vector2D[y+1][x] === 0)
+                    y++;
+                else
+                    dy = 0;
+            }
+            if (dy <= -1){
+                dy+=1;
+                if (vector2D[y-1][x] === 0)
+                    y--;
+                else
+                    dx = 0;
+            }
 
             drawBall(x, y, '#c80000')
-            
-            //updatePosition(x+dx, y+dy);
-        }
 
-        document.getElementById('updateButton').addEventListener('click', () => {
-            console.log('Update button clicked');
-            update();
-        });
+            if (x===EndX && y===EndY)
+                startGame(gridSize+4);
+        }
 
         function handleOrientation(event) {
-            //let alpha = event.alpha
-            a = event.beta
-            b = event.gamma
-            console.log('hier');
-            //console.log(gamma);
-        
-            //let cube = document.querySelector('.cube');
-            //cube.style.transform = 'rotateX(' + beta + 'deg) rotateY(' + gamma + 'deg) rotateZ(' + alpha + 'deg)';
-        
+            betta = event.beta
+            gamma = event.gamma
         }
-  
   
         async function requestDeviceOrientation() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            //iOS 13+ devices
             try {
                 const permissionState = await DeviceOrientationEvent.requestPermission()
                 if (permissionState === 'granted') {
-                window.addEventListener('deviceorientation', handleOrientation)
+                    window.addEventListener('deviceorientation', handleOrientation)
                 } else {
-                alert('Permission was denied')
+                    alert('Permission was denied')
                 }
             } catch (error) {
                 alert(error)
             }
             } else if ('DeviceOrientationEvent' in window) {
-            //non iOS 13+ devices
-            console.log("not iOS");
+                console.log("not iOS");
             window.addEventListener('deviceorientation', handleOrientation)
             } else {
-            //not supported
-            alert('nicht unterstützt')
+                alert('not supported')
             }
         }
 
-        document.addEventListener('keydown', (event) => {
-            
-                switch(event.key) {
-                    case 'ArrowUp':{
-                        if (a < 90)
-                            a+=10;
-                    }
-                        
-                        break;
-                    case 'ArrowDown':{
-                        if (a > -90)
-                            a-=10;
-                    }
-                        break;
-                    case 'ArrowLeft':{
-                        if (b > -90)
-                            b-=10;
-                    }
-                        break;
-                    case 'ArrowRight':{
-                        if (b < 90)
-                            b+=10;
-                    }
-                        break;
-                    default:
-                        break;
-                }
-            
-        });
-
-        requestDeviceOrientation();
-        setInterval(update, 500);
 
     </script>
 </body>

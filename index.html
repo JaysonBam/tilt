@@ -102,7 +102,7 @@
         requestDeviceOrientation();
         resetHearts();
         startGame(5);
-        setInterval(update, 50);
+        setInterval(update, 150);
 
         function startGame(difficulty) {
             ctx.clearRect(0, 0, size, size);
@@ -247,6 +247,8 @@
 
         function update() {
             console.log('dx = ' + dx + '\t' + 'dy = ' + dy);
+            console.log('x = ' + x + '\t' + 'y = ' + y);
+            console.log('y whole ' + isWholeNumber(y));
             if (lives === 0){
                 if (singleMessage)
                     alert('You reached level ' + level);
@@ -259,39 +261,64 @@
 
             dx += Math.sin(gamma / 180 * Math.PI);
             dy += Math.sin(betta / 180 * Math.PI);
+            console.log('next\tdx = ' + dx + '\t' + 'dy = ' + dy);
 
-            if (dx >= 1) {
-                dx -= 1;
-                if (vector2D[y][x + 1] === 0)
-                    x++;
+            while (dx >= 0.1) {
+                dx -= 0.1;
+                if (vector2D[Math.round(y)][Math.round(Math.ceil(x + 0.1-0.00001))] === 0)
+                    if (vector2D[Math.round(y)][Math.round(Math.floor(x + 0.1-0.00001))] === 0) 
+                        if (isWholeNumber(y))
+                            x+=0.1;
                 else
                     dx = 0;
-            }
-            if (dx <= -1) {
-                dx += 1;
-                if (vector2D[y][x - 1] === 0)
-                    x--;
                 else
                     dx = 0;
+                else
+                    dx = 0;
+                
             }
-            if (dy >= 1) {
-                dy -= 1;
-                if (vector2D[y + 1][x] === 0)
-                    y++;
+            while (dx <= -0.1) {
+                dx += 0.1;
+                console.log('0\t'+x+'['+Math.round(Math.ceil(x - 0.1+0.00001))+']'+'\t'+ y+'['+Math.round(y)+']'+'\t'+vector2D[Math.round(y)][Math.round(Math.ceil(x - 0.1+0.00001))] );
+                if (vector2D[Math.round(y)][Math.round(Math.ceil(x - 0.1+0.00001))] === 0){
+                    console.log('1');
+                    if (parseInt(vector2D[Math.round(y)][Math.round(Math.floor(x - 0.1+0.00001))]) === 0){
+                        console.log(2);
+                        if (isWholeNumber(y)){
+                            console.log(3) ;
+                            x-=0.1;
+                        }
+                        else dx = 0;  
+                    } 
+                    else dx = 0;    
+                }
+                else dx = 0;     
+        
+            }
+            while (dy >= 0.1) {
+                dy -= 0.1;
+                if (vector2D[Math.round(Math.ceil(y + 0.1-0.00001))][Math.round(x)] === 0  && vector2D[Math.round(Math.floor(y + 0.1-0.00001))][Math.round(x)] === 0 && isWholeNumber(x))
+                    y+=0.1;
                 else
                     dy = 0;
             }
-            if (dy <= -1) {
-                dy += 1;
-                if (vector2D[y - 1][x] === 0)
-                    y--;
+            while (dy <= -0.1) {
+                dy += 0.1;
+                if (vector2D[Math.round(Math.ceil(y - 0.1 + 0.00001))][Math.round(x)] === 0  && vector2D[Math.round(Math.floor(y - 0.1 + 0.00001))][Math.round(x)] === 0 && isWholeNumber(x))
+                    y-=0.1;
                 else
                     dy = 0;
             }
+
+            function isWholeNumber(num) {
+                return Number(num.toFixed(9)) === Number(num.toFixed(0));
+            }
+
+            
 
             drawBall(x, y, '#c80000')
 
-            if (x === EndX && y === EndY) {
+            if (Number(x.toFixed(9)) === EndX && Number(y.toFixed(9)) === EndY) {
                 let temp = level + 1;
                 alert('Start level ' + temp);
                 sleep(1000);
@@ -301,9 +328,8 @@
 
             for (let trap of traps) {
                 const [trapX, trapY] = trap;
-                if (trapX === x && trapY === y) {
-                    let temp = lives - 1;
-                    alert('Down to ' + temp + ' lives');
+                if (trapX === Number(x.toFixed(9)) && trapY === Number(y.toFixed(9))) {
+                    alert('Down to ' + lives + ' lives');
                     sleep(1000);
                     removeHeart();
                     lives--;

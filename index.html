@@ -102,7 +102,7 @@
         requestDeviceOrientation();
         resetHearts();
         startGame(5);
-        setInterval(update, 100);
+        setInterval(update, 150);
 
         function startGame(difficulty) {
             ctx.clearRect(0, 0, size, size);
@@ -370,6 +370,8 @@
         }
 
         function resetHearts() {
+
+            
             lives = 5;
             const heartsContainer = document.getElementById('hearts');
             heartsContainer.innerHTML = '';
@@ -384,7 +386,7 @@
             hearts = heartsContainer.getElementsByTagName('img');
         }
 
-        function removeHeart() 
+        function removeHeart() {
             if (hearts.length > 0) {
                 hearts[hearts.length - 1].remove();
             }

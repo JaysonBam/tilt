@@ -322,9 +322,9 @@
         }
 
         function update() {
-            console.log('dx = ' + dx + '\t' + 'dy = ' + dy);
-            console.log('x = ' + x + '\t' + 'y = ' + y);
-            console.log('y whole ' + isWholeNumber(y));
+            console.log('speed = ' + speed);
+            //console.log('x = ' + x + '\t' + 'y = ' + y);
+            //console.log('y whole ' + isWholeNumber(y));
             time-=tickSpeed;
             speedCounter-=tickSpeed;
             if (time < 0){
@@ -396,7 +396,8 @@
             for (let trap of traps) {
                 const [trapX, trapY] = trap;
                 if (trapX === Number(x.toFixed(9)) && trapY === Number(y.toFixed(9))) {
-                    speed = 0.3;
+                    speed = 0.2;
+                    speedCounter = 5000;
                 }
             }
         }

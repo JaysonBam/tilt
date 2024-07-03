@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -58,6 +57,11 @@
 </head>
 <body>
     <header>
+        <div id="editableTextContainer">
+            <h1 id="editableText">Editable Text</h1>
+        </div>
+    </header>
+    <header>
         <div id="hearts">
             <img src="heart.png" alt="Heart" width="30" height="30">
             <img src="heart.png" alt="Heart" width="30" height="30">
@@ -83,40 +87,57 @@
         canvas.height = size;
 
         let gridSize;
+        let dx;
+        let dy;
+        let betta;
+        let gamma;
         let x;
         let y;
         let EndX;
         let EndY;
         let blockSize;
-        let vector2D = [];
+        let vector2D;
+        let level = 1;
+        let lives = 5;
         let traps = [];
+        let hearts;
+        let singleMessage = false;
+        let time = 90000;
+        let speed = 1;
+        let speedCounter = 0;
 
-        // requestDeviceOrientation();
-        // resetHearts();
-        // startGame(5);
-        // setInterval(update, 150);
+        const tickSpeed = 150;
+
+        requestDeviceOrientation();
+        resetHearts();
+        startGame(5);
+        setInterval(update, 150);
 
         function startGame(difficulty) {
             ctx.clearRect(0, 0, size, size);
-            //getInitialData();
+            getInitialData(difficulty);
+            generateMaze();
             drawMaze();            
             drawBall(x, y, '#c80000');
+            
             drawBall(EndX, EndY, 'black');
+            getTraps();
             drawTraps();
-            resetHearts();
         }
         
-        function getInitialData() {
-            //get all this data
+        function getInitialData(difficulty) {
+            gridSize = difficulty;
+            dx = 0;
+            dy = 0;
+            betta = 0;
+            gamma = 0;
+            x = 1;
+            y = 1;
+            EndX = gridSize - 2;
+            EndY = gridSize - 2;
+            blockSize = size / gridSize;
             vector2D;
-            gridSize;
-            x;
-            y;
-            EndX;
-            EndY;
-            traps = []
-
-            blockSize = size/gridSize;
+            traps = [];
         }
 
         function drawMaze() {
@@ -128,6 +149,72 @@
                 }
             }
         }
+    
+        function generateMaze() {
+            vector2D = [];
+            for (let i = 0; i < gridSize; i++) {
+                vector2D[i] = [];
+                for (let j = 0; j < gridSize; j++) {
+                    if (i % 2 !== 0 && j % 2 !== 0) {
+                        vector2D[i][j] = 0;
+                    } else {
+                        vector2D[i][j] = 1;
+                    }
+                }
+            }
+
+            const stack = [];
+            const visited = [];
+
+            for (let i = 0; i < gridSize; i++) {
+                visited[i] = [];
+                for (let j = 0; j < gridSize; j++) {
+                    visited[i][j] = false;
+                }
+            }
+
+            const startX = 1;
+            const startY = 1;
+            const endX = gridSize - 2;
+            const endY = gridSize - 2;
+
+            stack.push([startX, startY]);
+            visited[startX][startY] = true;
+            endFound = false;
+
+            while (stack.length > 0) {
+                const current = stack.pop();
+                const [x, y] = current;
+                const directions = shuffleDirections();
+
+                for (let direction of directions) {
+                    const newX = x + direction[0] * 2;
+                    const newY = y + direction[1] * 2;
+
+                    
+                    if (newX >= 1 && newX < gridSize - 1 && newY >= 1 && newY < gridSize - 1 && !visited[newX][newY]) {
+                        vector2D[(newX + x) / 2][(newY + y) / 2] = 0;
+                        visited[newX][newY] = true;
+                        stack.push([newX, newY]);
+                    }
+                }
+
+            }
+
+            vector2D[startX][startY] = 0; 
+            vector2D[endX][endY] = 0;
+        }
+
+        function shuffleDirections() {
+            const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+            for (let i = directions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [directions[i], directions[j]] = [directions[j], directions[i]];
+            }
+
+            return directions;
+        }
         
         function drawSquare(xPos, yPos, color) {
             ctx.fillStyle = color;
@@ -135,13 +222,95 @@
         }
 
         function drawBall(xPos, yPos, color) {
-            const centerX = xPos * blockSize + blockSize / 2;
-            const centerY = yPos * blockSize + blockSize / 2;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, blockSize / 2 - 1, 0, Math.PI * 2);
-            ctx.fillStyle = color;
-            ctx.fill();
-            ctx.closePath();
+                const centerX = xPos * blockSize + blockSize / 2;
+                const centerY = yPos * blockSize + blockSize / 2;
+                const radius = blockSize / 2 - 1;
+
+                if (color === '#c80000') {
+                    // Draw basketball
+                    const ballColor = '#FF8C00'; // Basketball orange color
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = ballColor;
+                    ctx.fill();
+                    ctx.closePath();
+
+                    // Draw the vertical line
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY - radius);
+                    ctx.lineTo(centerX, centerY + radius);
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.closePath();
+
+                    // Draw the horizontal line
+                    ctx.beginPath();
+                    ctx.moveTo(centerX - radius, centerY);
+                    ctx.lineTo(centerX + radius, centerY);
+                    ctx.stroke();
+                    ctx.closePath();
+
+                    // Draw the left curve
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, Math.PI / 4, (3 * Math.PI) / 4);
+                    ctx.stroke();
+                    ctx.closePath();
+
+                    // Draw the right curve
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, (5 * Math.PI) / 4, (7 * Math.PI) / 4);
+                    ctx.stroke();
+                    ctx.closePath();
+                } else if (color === 'yellow') {
+                    // Draw cobweb
+                    const webColor = '#000000'; // White color for the cobweb
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fill();
+                    ctx.closePath();
+
+                    ctx.strokeStyle = webColor;
+                    ctx.lineWidth = 1;
+
+                    for (let i = 0; i < 8; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, centerY);
+                        ctx.lineTo(centerX + radius * Math.cos(i * Math.PI / 4), centerY + radius * Math.sin(i * Math.PI / 4));
+                        ctx.stroke();
+                        ctx.closePath();
+                    }
+
+                    for (let i = 1; i < 4; i++) {
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, radius * i / 4, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.closePath();
+                    }
+                } else {
+                    // Default ball
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+
+        function getTraps(){
+            for (let i = 1; i < vector2D.length - 1; i++) {
+                for (let j = 1; j < vector2D[i].length - 1; j++) {
+                    var tel = 0;
+                    if (vector2D[i+1][j] === 1) tel++;
+                    if (vector2D[i-1][j] === 1) tel++;
+                    if (vector2D[i][j+1] === 1) tel++;
+                    if (vector2D[i][j-1] === 1) tel++;
+
+                    if (tel === 3 && !(EndX === j && EndY === i) && vector2D[i][j] === 0 && Math.random() < 0.25)
+                        traps.push([j,i]);
+                }
+            }
         }
 
         function drawTraps() {
@@ -152,17 +321,94 @@
             }
         }
 
+        function update() {
+            console.log('dx = ' + dx + '\t' + 'dy = ' + dy);
+            console.log('x = ' + x + '\t' + 'y = ' + y);
+            console.log('y whole ' + isWholeNumber(y));
+            time-=tickSpeed;
+            speedCounter-=tickSpeed;
+            if (time < 0){
+                if (singleMessage)
+                    alert('You reached level ' + level);
+                singleMessage = false;
+                return;
+            }
+            if (speedCounter<0){
+                speed = 1;
+            }
+            timeleft = Math.round(time/1000);
+            editableText.innerText = 'Time: ' + timeleft + '\tLevel: ' + level;
+            singleMessage = true;   
+
+            ctx.clearRect(x * blockSize, y * blockSize, blockSize, blockSize);
+
+            dx += speed*Math.sin(gamma / 180 * Math.PI);
+            dy += speed*Math.sin(betta / 180 * Math.PI);
+            console.log('next\tdx = ' + dx + '\t' + 'dy = ' + dy);
+
+            while (dx >= 0.1) {
+                dx -= 0.1;
+                if (vector2D[Math.round(y)][Math.round(Math.ceil(x + 0.1-0.00001))] === 0 && vector2D[Math.round(y)][Math.round(Math.floor(x + 0.1-0.00001))] === 0 && isWholeNumber(y))
+                    x+=0.1;
+                else
+                    dx = 0;
+                
+            }
+            while (dx <= -0.1) {
+                dx += 0.1;
+                if (vector2D[Math.round(y)][Math.round(Math.ceil(x - 0.1+0.00001))] === 0 && vector2D[Math.round(y)][Math.round(Math.floor(x - 0.1+0.00001))] === 0 && (isWholeNumber(y)))
+                    x-=0.1;
+                else 
+                    dx = 0;     
         
-        function handleOrientation(event) {
-            let betta = event.beta;
-            let gamma = event.gamma;
-            //give betta and gamma
+            }
+            while (dy >= 0.1) {
+                dy -= 0.1;
+                if (vector2D[Math.round(Math.ceil(y + 0.1-0.00001))][Math.round(x)] === 0  && vector2D[Math.round(Math.floor(y + 0.1-0.00001))][Math.round(x)] === 0 && isWholeNumber(x))
+                    y+=0.1;
+                else
+                    dy = 0;
+            }
+            while (dy <= -0.1) {
+                dy += 0.1;
+                if (vector2D[Math.round(Math.ceil(y - 0.1 + 0.00001))][Math.round(x)] === 0  && vector2D[Math.round(Math.floor(y - 0.1 + 0.00001))][Math.round(x)] === 0 && isWholeNumber(x))
+                    y-=0.1;
+                else
+                    dy = 0;
+            }
+
+            function isWholeNumber(num) {
+                return Number(num.toFixed(9)) === Number(num.toFixed(0));
+            }
+
+            
+            drawTraps();
+            drawBall(x, y, '#c80000')
+
+            if (Number(x.toFixed(9)) === EndX && Number(y.toFixed(9)) === EndY) {
+                let temp = level + 1;
+                alert('Start level ' + temp);
+                sleep(1000);
+                level++;
+                startGame(gridSize + 4);
+            }
+
+            for (let trap of traps) {
+                const [trapX, trapY] = trap;
+                if (trapX === Number(x.toFixed(9)) && trapY === Number(y.toFixed(9))) {
+                    speed = 0.3;
+                }
+            }
         }
 
-        function Update(){//when reqeusted
-            tx.clearRect(x * blockSize, y * blockSize, blockSize, blockSize);
-            //get x and y
-            drawBall(x, y, '#c80000');
+        function sleep(ms) {
+            const start = Date.now();
+            while (Date.now() - start < ms) {} // Busy-wait until time's up
+        }
+
+        function handleOrientation(event) {
+            betta = event.beta;
+            gamma = event.gamma;
         }
   
         async function requestDeviceOrientation() {
@@ -186,7 +432,8 @@
         }
 
         function resetHearts() {
-            let lives = 5;
+            
+            lives = 5;
             const heartsContainer = document.getElementById('hearts');
             heartsContainer.innerHTML = '';
             for (let i = 0; i < 5; i++) {
@@ -207,7 +454,9 @@
         }
 
         document.getElementById('restartButton').addEventListener('click', () => {
-            requestDeviceOrientation();          
+            resetHearts();
+            level = 0;
+            startGame(5);          
         });
 
         // Example usage of removeHeart

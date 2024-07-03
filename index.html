@@ -61,22 +61,15 @@
             <h1 id="editableText">Editable Text</h1>
         </div>
     </header>
-    <header>
-        <div id="hearts">
-            <img src="heart.png" alt="Heart" width="30" height="30">
-            <img src="heart.png" alt="Heart" width="30" height="30">
-            <img src="heart.png" alt="Heart" width="30" height="30">
-            <img src="heart.png" alt="Heart" width="30" height="30">
-            <img src="heart.png" alt="Heart" width="30" height="30">
-        </div>
-        <div class="buttons">
-            <button id="restartButton">Allow permission</button>
-        </div>
-    </header>
     <div id="canvasContainer">
         <canvas id="canvas"></canvas>
     </div>
-    <footer></footer>
+    <footer>
+        <div class="buttons">
+            <button id="restartButton">Restart</button>
+            <button id="btnPermission">Allow permission</button>
+        </div>
+    </footer>
 
     <script>
         const canvas = document.getElementById('canvas');
@@ -100,7 +93,6 @@
         let level = 1;
         let lives = 5;
         let traps = [];
-        let hearts;
         let singleMessage = false;
         let time = 90000;
         let speed = 1;
@@ -109,7 +101,6 @@
         const tickSpeed = 150;
 
         requestDeviceOrientation();
-        resetHearts();
         startGame(5);
         setInterval(update, 150);
 
@@ -432,32 +423,15 @@
             }
         }
 
-        function resetHearts() {
-            
-            lives = 5;
-            const heartsContainer = document.getElementById('hearts');
-            heartsContainer.innerHTML = '';
-            for (let i = 0; i < 5; i++) {
-                const heart = document.createElement('img');
-                heart.src = 'heart.png';
-                heart.alt = 'Heart';
-                heart.width = 30;
-                heart.height = 30;
-                heartsContainer.appendChild(heart);
-            }
-            hearts = heartsContainer.getElementsByTagName('img');
-        }
-
-        function removeHeart() {
-            if (hearts.length > 0) {
-                hearts[hearts.length - 1].remove();
-            }
-        }
 
         document.getElementById('restartButton').addEventListener('click', () => {
-            resetHearts();
             level = 0;
-            startGame(5);          
+            startGame(5); 
+            time = 90000;         
+        });
+
+        document.getElementById('btnPermission').addEventListener('click', () => {
+            requestDeviceOrientation();        
         });
 
         // Example usage of removeHeart

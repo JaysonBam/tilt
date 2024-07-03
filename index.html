@@ -393,6 +393,7 @@
         }
 
         document.getElementById('restartButton').addEventListener('click', () => {
+            requestDeviceOrientation();
             resetHearts();
             level = 0;
             startGame(5);          

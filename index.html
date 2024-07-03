@@ -66,7 +66,7 @@
             <img src="heart.png" alt="Heart" width="30" height="30">
         </div>
         <div class="buttons">
-            <button id="restartButton">Restart</button>
+            <button id="restartButton">Allow permission</button>
         </div>
     </header>
     <div id="canvasContainer">
@@ -83,52 +83,40 @@
         canvas.height = size;
 
         let gridSize;
-        let dx;
-        let dy;
-        let betta;
-        let gamma;
         let x;
         let y;
         let EndX;
         let EndY;
         let blockSize;
-        let vector2D;
-        let level = 1;
-        let lives = 5;
+        let vector2D = [];
         let traps = [];
-        let hearts;
-        let singleMessage = false;
 
-        requestDeviceOrientation();
-        resetHearts();
-        startGame(5);
-        setInterval(update, 150);
+        // requestDeviceOrientation();
+        // resetHearts();
+        // startGame(5);
+        // setInterval(update, 150);
 
         function startGame(difficulty) {
             ctx.clearRect(0, 0, size, size);
-            getInitialData(difficulty);
-            generateMaze();
+            //getInitialData();
             drawMaze();            
             drawBall(x, y, '#c80000');
-            
             drawBall(EndX, EndY, 'black');
-            getTraps();
             drawTraps();
+            resetHearts();
         }
         
-        function getInitialData(difficulty) {
-            gridSize = difficulty;
-            dx = 0;
-            dy = 0;
-            betta = 0;
-            gamma = 0;
-            x = 1;
-            y = 1;
-            EndX = gridSize - 2;
-            EndY = gridSize - 2;
-            blockSize = size / gridSize;
+        function getInitialData() {
+            //get all this data
             vector2D;
-            traps = [];
+            gridSize;
+            x;
+            y;
+            EndX;
+            EndY;
+            traps = []
+
+            blockSize = size/gridSize;
         }
 
         function drawMaze() {
@@ -139,72 +127,6 @@
                     }
                 }
             }
-        }
-    
-        function generateMaze() {
-            vector2D = [];
-            for (let i = 0; i < gridSize; i++) {
-                vector2D[i] = [];
-                for (let j = 0; j < gridSize; j++) {
-                    if (i % 2 !== 0 && j % 2 !== 0) {
-                        vector2D[i][j] = 0;
-                    } else {
-                        vector2D[i][j] = 1;
-                    }
-                }
-            }
-
-            const stack = [];
-            const visited = [];
-
-            for (let i = 0; i < gridSize; i++) {
-                visited[i] = [];
-                for (let j = 0; j < gridSize; j++) {
-                    visited[i][j] = false;
-                }
-            }
-
-            const startX = 1;
-            const startY = 1;
-            const endX = gridSize - 2;
-            const endY = gridSize - 2;
-
-            stack.push([startX, startY]);
-            visited[startX][startY] = true;
-            endFound = false;
-
-            while (stack.length > 0) {
-                const current = stack.pop();
-                const [x, y] = current;
-                const directions = shuffleDirections();
-
-                for (let direction of directions) {
-                    const newX = x + direction[0] * 2;
-                    const newY = y + direction[1] * 2;
-
-                    
-                    if (newX >= 1 && newX < gridSize - 1 && newY >= 1 && newY < gridSize - 1 && !visited[newX][newY]) {
-                        vector2D[(newX + x) / 2][(newY + y) / 2] = 0;
-                        visited[newX][newY] = true;
-                        stack.push([newX, newY]);
-                    }
-                }
-
-            }
-
-            vector2D[startX][startY] = 0; 
-            vector2D[endX][endY] = 0;
-        }
-
-        function shuffleDirections() {
-            const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-
-            for (let i = directions.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [directions[i], directions[j]] = [directions[j], directions[i]];
-            }
-
-            return directions;
         }
         
         function drawSquare(xPos, yPos, color) {
@@ -222,21 +144,6 @@
             ctx.closePath();
         }
 
-        function getTraps(){
-            for (let i = 1; i < vector2D.length - 1; i++) {
-                for (let j = 1; j < vector2D[i].length - 1; j++) {
-                    var tel = 0;
-                    if (vector2D[i+1][j] === 1) tel++;
-                    if (vector2D[i-1][j] === 1) tel++;
-                    if (vector2D[i][j+1] === 1) tel++;
-                    if (vector2D[i][j-1] === 1) tel++;
-
-                    if (tel === 3 && !(EndX === j && EndY === i) && vector2D[i][j] === 0 && Math.random() < 0.25)
-                        traps.push([j,i]);
-                }
-            }
-        }
-
         function drawTraps() {
             for (let trap of traps) {
                 const xPos = trap[0];
@@ -245,108 +152,17 @@
             }
         }
 
-        function update() {
-            console.log('dx = ' + dx + '\t' + 'dy = ' + dy);
-            console.log('x = ' + x + '\t' + 'y = ' + y);
-            console.log('y whole ' + isWholeNumber(y));
-            if (lives === 0){
-                if (singleMessage)
-                    alert('You reached level ' + level);
-                singleMessage = false;
-                return;
-            }
-            singleMessage = true;   
-
-            ctx.clearRect(x * blockSize, y * blockSize, blockSize, blockSize);
-
-            dx += Math.sin(gamma / 180 * Math.PI);
-            dy += Math.sin(betta / 180 * Math.PI);
-            console.log('next\tdx = ' + dx + '\t' + 'dy = ' + dy);
-
-            while (dx >= 0.1) {
-                dx -= 0.1;
-                if (vector2D[Math.round(y)][Math.round(Math.ceil(x + 0.1-0.00001))] === 0)
-                    if (vector2D[Math.round(y)][Math.round(Math.floor(x + 0.1-0.00001))] === 0) 
-                        if (isWholeNumber(y))
-                            x+=0.1;
-                else
-                    dx = 0;
-                else
-                    dx = 0;
-                else
-                    dx = 0;
-                
-            }
-            while (dx <= -0.1) {
-                dx += 0.1;
-                console.log('0\t'+x+'['+Math.round(Math.ceil(x - 0.1+0.00001))+']'+'\t'+ y+'['+Math.round(y)+']'+'\t'+vector2D[Math.round(y)][Math.round(Math.ceil(x - 0.1+0.00001))] );
-                if (vector2D[Math.round(y)][Math.round(Math.ceil(x - 0.1+0.00001))] === 0){
-                    console.log('1');
-                    if (parseInt(vector2D[Math.round(y)][Math.round(Math.floor(x - 0.1+0.00001))]) === 0){
-                        console.log(2);
-                        if (isWholeNumber(y)){
-                            console.log(3) ;
-                            x-=0.1;
-                        }
-                        else dx = 0;  
-                    } 
-                    else dx = 0;    
-                }
-                else dx = 0;     
         
-            }
-            while (dy >= 0.1) {
-                dy -= 0.1;
-                if (vector2D[Math.round(Math.ceil(y + 0.1-0.00001))][Math.round(x)] === 0  && vector2D[Math.round(Math.floor(y + 0.1-0.00001))][Math.round(x)] === 0 && isWholeNumber(x))
-                    y+=0.1;
-                else
-                    dy = 0;
-            }
-            while (dy <= -0.1) {
-                dy += 0.1;
-                if (vector2D[Math.round(Math.ceil(y - 0.1 + 0.00001))][Math.round(x)] === 0  && vector2D[Math.round(Math.floor(y - 0.1 + 0.00001))][Math.round(x)] === 0 && isWholeNumber(x))
-                    y-=0.1;
-                else
-                    dy = 0;
-            }
-
-            function isWholeNumber(num) {
-                return Number(num.toFixed(9)) === Number(num.toFixed(0));
-            }
-
-            
-
-            drawBall(x, y, '#c80000')
-
-            if (Number(x.toFixed(9)) === EndX && Number(y.toFixed(9)) === EndY) {
-                let temp = level + 1;
-                alert('Start level ' + temp);
-                sleep(1000);
-                level++;
-                startGame(gridSize + 4);
-            }
-
-            for (let trap of traps) {
-                const [trapX, trapY] = trap;
-                if (trapX === Number(x.toFixed(9)) && trapY === Number(y.toFixed(9))) {
-                    alert('Down to ' + lives + ' lives');
-                    sleep(1000);
-                    removeHeart();
-                    lives--;
-                    startGame(gridSize);
-                    break; // Exit the loop once we find the trap
-                }
-            }
-        }
-
-        function sleep(ms) {
-            const start = Date.now();
-            while (Date.now() - start < ms) {} // Busy-wait until time's up
-        }
-
         function handleOrientation(event) {
-            betta = event.beta;
-            gamma = event.gamma;
+            let betta = event.beta;
+            let gamma = event.gamma;
+            //give betta and gamma
+        }
+
+        function Update(){//when reqeusted
+            tx.clearRect(x * blockSize, y * blockSize, blockSize, blockSize);
+            //get x and y
+            drawBall(x, y, '#c80000');
         }
   
         async function requestDeviceOrientation() {
@@ -370,9 +186,7 @@
         }
 
         function resetHearts() {
-
-            
-            lives = 5;
+            let lives = 5;
             const heartsContainer = document.getElementById('hearts');
             heartsContainer.innerHTML = '';
             for (let i = 0; i < 5; i++) {
@@ -393,10 +207,7 @@
         }
 
         document.getElementById('restartButton').addEventListener('click', () => {
-            requestDeviceOrientation();
-            resetHearts();
-            level = 0;
-            startGame(5);          
+            requestDeviceOrientation();          
         });
 
         // Example usage of removeHeart

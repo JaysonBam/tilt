@@ -384,13 +384,14 @@
             hearts = heartsContainer.getElementsByTagName('img');
         }
 
-        function removeHeart() {
+        function removeHeart() 
             if (hearts.length > 0) {
                 hearts[hearts.length - 1].remove();
             }
         }
 
         document.getElementById('restartButton').addEventListener('click', () => {
+            requestDeviceOrientation();
             resetHearts();
             level = 0;
             startGame(5);          
